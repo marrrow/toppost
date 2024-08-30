@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Telegram Posts</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .topic-selector {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+        .topic {
+            padding: 5px 10px;
+            margin-right: 10px;
+            border-radius: 16px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .topic.active {
+            background-color: var(--tg-theme-secondary-bg-color, #efeff4);
+            color: var(--tg-theme-text-color, #000);
+        }
+        .post {
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .post-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .post-info {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topic-selector" id="topicSelector"></div>
+        <div id="posts"></div>
+    </div>
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const postsContainer = document.getElementById('posts');
+        const topicSelector = document.getElementById('topicSelector');
+        let currentTopic = 'All';
+
+        const topics = ['All', 'News', 'Tech', 'Entertainment', 'Sports', 'Science'];
+
+        // Mock data (replace with actual API call later)
+        const mockPosts = [
+            { id: 1, text: "Breaking news: Major event shocks the world!", views: 1000000, channel: { username: "worldnews", title: "World News" } },
+            { id: 2, text: "New iPhone announced with revolutionary features", views: 500000, channel: { username: "techcrunch", title: "TechCrunch" } },
+            { id: 3, text: "Blockbuster movie breaks all box office records", views: 750000, channel: { username: "entertainmentweekly", title: "Entertainment Weekly" } },
+            { id: 4, text: "Scientists make groundbreaking discovery in quantum physics", views: 300000, channel: { username: "science", title: "Science Magazine" } },
+            { id: 5, text: "Underdog team wins championship in stunning upset", views: 600000, channel: { username: "espn", title: "ESPN" } }
+        ];
+
+        function createTopicSelector() {
+            topics.forEach(topic => {
+                const topicElement = document.createElement('div');
+                topicElement.className = 'topic';
+                topicElement.textContent = topic;
+                topicElement.onclick = () => selectTopic(topic);
+                topicSelector.appendChild(topicElement);
+            });
+        }
+
+        function selectTopic(topic) {
+            currentTopic = topic;
+            document.querySelectorAll('.topic').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.topic:nth-child(${topics.indexOf(topic) + 1})`).classList.add('active');
+            fetchViralPosts();
+        }
+
+        function displayPosts(posts) {
+            postsContainer.innerHTML = '';
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.innerHTML = `
+                    <div class="post-text">${post.text}</div>
+                    <div class="post-info">Views: ${post.views.toLocaleString()} | Channel: ${post.channel.title}</div>
+                `;
+                postElement.onclick = () => tg.openTelegramLink(`https://t.me/${post.channel.username}/${post.id}`);
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        function fetchViralPosts() {
+            postsContainer.innerHTML = '<div class="loading">Loading posts...</div>';
+            // Simulate API call delay
+            setTimeout(() => {
+                let filteredPosts = mockPosts;
+                if (currentTopic !== 'All') {
+                    filteredPosts = mockPosts.filter(post => post.text.toLowerCase().includes(currentTopic.toLowerCase()));
+                }
+                displayPosts(filteredPosts);
+            }, 1000);
+        }
+
+        createTopicSelector();
+        selectTopic('All');
+
+        // Simulating pull-to-refresh functionality
+        let startY;
+        document.addEventListener('touchstart', e => {
+            startY = e.touches[0].pageY;
+        });
+
+        document.addEventListener('touchmove', e => {
+            const y = e.touches[0].pageY;
+            if (y - startY > 50 && window.scrollY === 0) {
+                fetchViralPosts();
+            }
+        });
+    </script>
+</body>
+</html>
